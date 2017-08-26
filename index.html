@@ -1,1 +1,158 @@
-Hello Yuri echo Heloo Yuri ! I am your webapp echo Heloo Yuri !
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Welcome to Yuri's website!</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/css?family=Cabin+Sketch" rel="stylesheet">
+   <style>
+	   body, h1{
+	   		//font-family: 'Cabin Sketch', cursive;
+			font-family:'Courier New';
+			font-size: 16px;
+			color:#827d71;
+			//background-color:#fbfbf9;
+	   }
+	   h1{
+		   font-style:bold;
+	   }
+	   ul {
+	       padding-left: 0;
+	       padding-top: 30px;
+	   }
+   		ul li{
+		
+			font-size:16px;
+		    list-style:none;
+		    padding-left:0;
+			padding-bottom:10px;
+		}
+		
+		li a{
+			color:#827d71;
+		}
+		li a:hover{
+			text-decoration: none;
+			 background: #FFFA92;
+		}
+		.footer{
+			text-align:center;
+			font-size:12px;
+			//font-style:italic;
+		}
+		.blinking-cursor {
+		  -webkit-animation: 1s blink step-end infinite;
+		  -moz-animation: 1s blink step-end infinite;
+		  -ms-animation: 1s blink step-end infinite;
+		  -o-animation: 1s blink step-end infinite;
+		  animation: 1s blink step-end infinite;
+		}
+
+		@keyframes "blink" {
+		  from, to {
+		    color: transparent;
+		  }
+		  50% {
+		    color: #827d71;
+		  }
+		}
+
+		@-moz-keyframes blink {
+		  from, to {
+		    color: transparent;
+		  }
+		  50% {
+		    color: #827d71;
+		  }
+		}
+
+		@-webkit-keyframes "blink" {
+		  from, to {
+		    color: transparent;
+		  }
+		  50% {
+		    color: #827d71;
+		  }
+		}
+
+		@-ms-keyframes "blink" {
+		  from, to {
+		    color: transparent;
+		  }
+		  50% {
+		    color: #827d71;
+		  }
+		}
+
+		@-o-keyframes "blink" {
+		  from, to {
+		    color: transparent;
+		  }
+		  50% {
+		    color: #827d71;
+		  }
+		}
+   </style>
+   
+   <script>
+	   function get_post(filename, destination){
+		   var client = new XMLHttpRequest();
+		   client.open('GET', '/foo.txt');
+		   client.onreadystatechange = function() {
+			   $(destination).text(databack.replace(/\r\n/g,EOL));
+		     (client.responseText);
+		   }
+		   client.send();
+	   }
+   </script>
+   
+
+  </head>
+  <body>
+	 <div class="container-fluid">
+		<div class="row">
+			  <div class="col-md-2" style="padding-top:15px">
+				  <!--img src="images/laptop-512.png"-->
+				  <div style="
+				      font-weight: bolder;
+				      background: #FFFBBA;
+				      width: max-content;
+				  ">YURI GOLUB<span class='blinking-cursor'>❚</span></div>
+				  <ul>
+					  <li><a href="#about">ABOUT</a></li>
+				      <li><a href="#fewthings">FEW THINGS</a></li>
+				  </ul>
+			  </div>
+			  <div class="col-md-10" style="padding:0px 60px 60px 15px; border-left:1px dashed">
+				  <H1 style="background: #FFFBBA;color:#777;width:min-content;" id="about"><b>ABOUT</b></H1>
+				  Hi! My name is Yuri Golub and I am a software developer and also a data science and machine learning enthusiast. Follow or contact me in the social media:<br><br>
+				  <a href="#"><img src="images/1.png" width="64"></a>
+				  <a href="#"><img src="images/2.png" width="64"></a>
+				  <a href="#"><img src="images/3.png" width="64"></a>
+				  <br><br>
+				  <H1 style="background: #FFFBBA;color:#777;width:max-content;" id="fewthings"><b>A FEW THINGS OF MINE:</b></H1>
+				  <ul>
+					  <li> ls -al ./projects<br></li>
+					  <li>&nbsp;&nbsp;<a href="#">/<b>Particle filter</b>/JavaScript implementation of the Particle Filter algorithm</a> </li>
+					  <li>&nbsp;&nbsp;<a href="#">/<b>OXYMATH</b>/js library for simple vector and matrix manipulation</a> </li>
+				  </ul>
+			  </div>
+		</div>
+		<div class="row" style = "border-top:1px dashed">
+			<div class="col-md-12 footer">
+				<br>
+				Yuri Golub (c) 2017
+			</div>
+		</div>
+	</div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
