@@ -1,0 +1,582 @@
+<html>
+<head>
+<title>Particle filter</title>
+
+
+<style type="text/css">
+#world{
+	border:1px solid gray;
+	position:absolute;
+}
+
+#copyright{
+	color:gray;
+	font-size:10px;
+}
+
+.center{
+	text-align:center;
+	vertical-align:top;
+}
+
+.UI{
+
+	font-weight:bold;
+}
+
+
+</style>
+
+<script type="text/javascript">
+
+var height = 300;
+var width  = 400;
+
+var number_of_particles = 400;
+
+var canvas = null;
+var context = null;
+
+var map = new Array(height*width);
+var particles = null;
+
+//'DRAWING LINES WITH MOUSE' GLOBAL VARIABLES
+var start_click = true;
+var start_click_coordinates = new Array(2);
+
+
+//'PLACING ROBOT'
+var placing_robot = false;
+var robot_coordinates = new Array(2);
+robot_coordinates[0]=10;
+robot_coordinates[1]=10;
+
+
+var move_to = true;
+var repeat_move = true;
+
+
+
+
+function init() {
+		 
+	
+	particles = new Array(number_of_particles?number_of_particles:100);
+	canvas = document.getElementById("world");
+	context = canvas.getContext("2d");
+	canvas.addEventListener("mousedown",Actions,false);
+	document.addEventListener("keydown",move,false);
+	InitializeParticles();
+}
+
+
+function ConvertCoordinatesToMap(x,y){
+	return y*width+x;
+}
+
+function ConvertMapToCoordinates(z){
+	this.x = z % width;
+	this.y = Math.floor(z / width);
+}
+
+function ClearMap(){
+	for(i=0;i<map.length;++i)
+		map[i]=0;
+}
+
+function Particle(z,w) {
+	
+	point = new  ConvertMapToCoordinates(z);	
+
+	this.x = point.x;
+	this.y = point.y;
+	this.weight = w;
+}
+
+
+function Actions(event){
+ 	
+	var x = event.clientX;
+	var y = event.clientY;
+	x-=canvas.offsetLeft;
+	y-=canvas.offsetTop;
+
+		
+	//alert(x+":"+y);
+	//alert(move_to);		
+	if(move_to){
+		MoveRobot(x,y);
+		if(!repeat_move){
+			move_to = false;}
+		DrawWorld();
+		return;
+	}
+
+
+	if(placing_robot){
+		PlaceRobot(x,y);
+		//DrawRobot();
+		DrawWorld();
+		placing_robot = false;
+		return;
+	}
+
+	if(start_click)
+	{
+		DrawCross(x,y,'#333');
+		start_click_coordinates[0]=x;
+		start_click_coordinates[1]=y;	
+		start_click = false;		
+	}else{
+		DrawCross(x,y,'#333');	
+		DrawLine(start_click_coordinates[0],start_click_coordinates[1],x,y,'#333');
+		start_click = true;
+		FillMapWithNewObstacleLine(start_click_coordinates[0],start_click_coordinates[1],x,y);
+	}
+   
+	//this.x = x;
+	//this.y = y;
+}    
+
+function FillMapWithNewObstacleLine(x0,y0,x1,y1){
+
+	//line equation : y = k(x-x0) + y0
+	
+	var k = (y1-y0)/(x1-x0);
+	
+	step_x = x1>x0 ? 1 :-1;
+	step_y = y1>y0 ? 1 :-1;
+
+		
+	for (x = x0; x != x1; x+=step_x ) {
+		y = Math.floor(k*(x-x0)+y0);
+		map[ConvertCoordinatesToMap(x,y)]=1; 
+	}
+	for (y = y0; y != y1; y+=step_y){
+		x = Math.floor((y-y0)/k+x0);
+		map[ConvertCoordinatesToMap(x,y)]=1; 
+	}
+}
+
+function DrawLine(x0,y0,x1,y1,color){
+	context.beginPath();
+	context.strokeColor = color;
+	context.moveTo(x0,y0);
+	context.lineTo(x1,y1);
+	context.stroke();	
+	context.closePath();
+}
+
+function DrawCross(x,y,color,size){
+
+	if(typeof(size) == 'undefined'){
+		size=2;
+	}
+	context.beginPath();	
+	context.strokeStyle=color;
+	context.moveTo(x-size,y+size);
+	context.lineTo(x+size,y-size);
+	context.moveTo(x+size,y+size);
+	context.lineTo(x-size,y-size);
+	context.stroke();
+	context.closePath();
+}
+
+function DrawPoint(x,y,color){
+	context.beginPath();
+	context.strokeStyle = color;
+	//context.moveTo(x,y);
+	//context.lineTo(x+1,y+1);
+	context.strokeRect(x,y,2,2);
+	//context.stroke();
+	context.closePath();
+}
+
+
+function DrawCircle(x,y,radius,color){
+	context.fillStyle = color;
+	context.strokeStyle = color;
+	context.beginPath();
+	context.arc(x,y,radius,0,Math.PI*2,true);
+	context.closePath();
+	context.stroke();
+	context.fill();
+}
+
+function DrawMap(){
+	
+	for(i=0;i<map.length;++i){
+		if(map[i]==1){
+			point = new ConvertMapToCoordinates(i);
+			DrawPoint(point.x,point.y,"green");
+			Status(point.x + ":" + point.y);
+		}
+	}
+}
+
+
+function Status(text){
+	document.getElementById("status").innerText = text;
+}
+function DrawAllParticles(){
+	for(i = 0; i < particles.length; i++){
+		DrawCross(particles[i].x,particles[i].y,"333");
+	}
+	Status(particles.length);
+}
+
+
+function DrawRobot()
+{
+	DrawCircle(robot_coordinates[0],robot_coordinates[1],6,"red");
+}
+
+function DrawWorld(){
+	context.clearRect ( 0 , 0 , width , height );
+	DrawMap();
+	DrawRobot();
+	DrawAllParticles();
+}
+
+function PlaceRobot(x,y) {
+	robot_coordinates[0]=x;
+	robot_coordinates[1]=y;
+}
+
+function InitializeParticles(){
+	var random_span = Math.floor(height*width/number_of_particles);
+	
+	weight = 1/number_of_particles;
+	
+	for (i = 0; i < particles.length; ++i) {
+		particles[i]=new Particle(i*random_span+(Math.floor(Math.random()*random_span)),weight);
+	}
+}
+
+function Reset(){
+
+
+	ClearMap();
+	init();
+	DrawWorld();	
+
+	start_click = true;
+	repeat_move=true;
+	move_to = true;
+	placing_robot=false;
+	document.getElementById("repeat_move").checked = 0;
+}
+
+
+
+
+function RepeatMove(){
+	if(document.getElementById("repeat_move").checked){
+		 repeat_move = true;
+		 placing_robot = false;
+	}else repeat_move = false;
+}
+
+function Measurment(range){
+	// left 7
+	var right = true;
+	var left  = true;
+	var up    = true;
+	var down  = true;
+
+	if(typeof(range) == 'undefined'){
+                range=20;
+        }
+	
+
+	for(x=robot_coordinates[0];x==robot_coordinates[0];++x){
+		for(y=robot_coordinates[1]-range;y<robot_coordinates[1];y++){
+			if(y<0 ||(x>0&&x<width)&& map[ConvertCoordinatesToMap(x,y)]==1){
+				up = false;
+				break;
+			}
+		}
+		
+		for(y=robot_coordinates[1];y<robot_coordinates[1]+range;y++){
+			if(y>height || (x>0&&x<width)&& map[ConvertCoordinatesToMap(x,y)]==1){
+				down = false;
+				break;
+			}
+		}
+	}
+    
+	for(y=robot_coordinates[1];y==robot_coordinates[1];++y){
+                for(x=robot_coordinates[0]-range;x<robot_coordinates[0];x++){
+                        if(x<0 || (y>0&&y<height)&&  map[ConvertCoordinatesToMap(x,y)]==1){
+                                left = false;
+                                break;
+                        }
+                }
+                
+                for(x=robot_coordinates[0];x<robot_coordinates[0]+range;x++){
+			
+                        if(x>width || (y>0&&y<height)&&  map[ConvertCoordinatesToMap(x,y)]==1){
+                                right = false;
+                                break;
+                        }
+                }
+        }
+        
+	this.up = up;
+	this.right=right;
+	this.down = down;
+	this.left = left;
+
+	//EMULATING NORTH SENSOR 20% FLAWNESS
+	//this.up = Math.random()>0.8?this.up:!this.up;
+	
+}
+
+function Sense(){
+	meas = new Measurment();
+	alert("up-"+meas.up+" right-"+meas.right+" left-"+meas.left+" down-"+meas.down);
+}
+
+function ProbabilityOfStateGivenMeasurment(x,y,measurment)
+{
+	var sensor_range = 20;
+	var left = true;
+	var difference = 0;
+
+	for(var c = x-sensor_range; c<x; c++){
+		if(c<0||map[ConvertCoordinatesToMap(c,y)]==1){
+			left = false;
+			break;
+		}
+	}
+
+	if(left!=measurment.left)difference++;
+
+	var right = true;
+        for(var c = x; c<x+sensor_range; c++){
+                if(c>width||map[ConvertCoordinatesToMap(c,y)]==1){
+                        right = false;
+                        break;
+                }
+        }
+
+        if(right!=measurment.right)difference++;
+
+
+	var up = true;
+        for(var c = y-sensor_range; c<y; c++){
+                if(c<0||map[ConvertCoordinatesToMap(x,c)]==1){
+                        up = false;
+                        break;
+                }
+        }
+	if(up!=measurment.up)difference++;
+
+	var down = true;
+        for(var c = y; c<y+sensor_range; c++){
+                if(c>height||map[ConvertCoordinatesToMap(x,c)]==1){
+                        down = false;
+                        break;
+                }
+        }
+	if(down!=measurment.down)difference++;
+
+
+//80% probability that we are in the correct loaction
+//	if(left==measurment.left && up==measurment.up && right==measurment.right && down == measurment.down){
+//		return 0.99;
+//	}else{
+//		return 0.01;
+//	}
+	
+	switch(difference){
+		case 0: return 0.99;
+		case 1: return 0.2;
+		case 2: return 0.1;
+		case 3: return 0.05;
+		case 4: return 0.0001;
+	}	
+}
+
+
+function MoveRobot(x,y)
+{
+
+//	meas = new Measurment();
+	
+	var init_state = Array(2);
+	init_state[0] = robot_coordinates[0];
+	init_state[1] = robot_coordinates[1];
+
+	var measurment = new Measurment();
+
+	AssignWeights(measurment);
+	
+	while(robot_coordinates[0]!=x || robot_coordinates[1]!=y)
+	{
+	        var delta_X= x>robot_coordinates[0]?1:(x<robot_coordinates[0]?-1:0);
+	        var delta_Y= y>robot_coordinates[1]?1:(y<robot_coordinates[1]?-1:0);
+		
+		var meas = new Measurment(10);
+
+		if( (delta_X<0 && !meas.left) || (delta_X>0 && !meas.right) || (delta_Y<0 && !meas.up) || (delta_Y>0 && !meas.down))
+			break;	
+
+		robot_coordinates[0]+=delta_X;
+		robot_coordinates[1]+=delta_Y;
+		
+		//DrawWorld();
+		//sleep(500);
+	}
+	
+	var X_shift = robot_coordinates[0]-init_state[0];
+	var Y_shift = robot_coordinates[1]-init_state[1];
+
+	Resample(X_shift,Y_shift);
+}
+
+
+
+function AssignWeights(meas){
+	
+        var eta = 0;
+	for(i=0;i<particles.length;i++){
+		particles[i].weight = ProbabilityOfStateGivenMeasurment( particles[i].x, particles[i].y, meas);
+//		alert(particles[i].weight)
+		eta+=particles[i].weight;
+	}
+
+	for(i=0;i<particles.length;++i){
+		particles[i].weight/=eta;
+		
+//		alert(particles[i].weight)
+	}
+}
+
+
+function GetRandomParticleWithRespectToProbability(){
+	var random = Math.random();
+	var sum    = 0;
+	for(var i=0;i<particles.length;i++){
+		if(sum<random && random<sum+particles[i].weight){
+			return particles[i];
+		}else{
+			sum+=particles[i].weight;
+		}
+	}	
+	return false;
+}
+
+function getRandomArbitary (min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function Resample(x_shift,y_shift){
+
+	var new_particles = new Array(number_of_particles);
+
+	var noise = 3;
+	
+	var i = 0;
+	var n = Math.floor(number_of_particles*0.02); //2% of particles is noise
+	var skip = 0;
+
+	for(i=0;i<new_particles.length-n;++i){
+		var particle = GetRandomParticleWithRespectToProbability();
+		//New location + noise
+		
+		
+		var shifted_x = particle.x+x_shift+Math.floor(getRandomArbitary(1-noise,noise));
+		var shifted_y = particle.y+y_shift+Math.floor(getRandomArbitary(1-noise,noise));
+	
+	
+//		Status(particle.x+":"+x_shift+":"+Math.floor( Math.random()*6-3 )+":"+shifted_x+":"+i);
+
+		if( shifted_x<=0||shifted_x>=width || shifted_y<=0 || shifted_y>=height ){
+			i--;	
+			skip++;
+		}else{
+			new_particles[i] = new Particle(ConvertCoordinatesToMap(shifted_x,shifted_y),0);
+		}
+		
+		if(skip>number_of_particles)
+			break;
+	}
+
+	//noise
+	var random_span = Math.floor(height*width/n);
+        weight = 0.0000000001;
+       var start = i; 
+	for (; i < new_particles.length; ++i) {
+                new_particles[i]=new Particle((i-start)*random_span+(Math.floor(Math.random()*random_span)),weight);
+        }
+
+
+
+	for(var i=0;i<number_of_particles;++i){
+		particles[i] = new_particles[i];
+
+	}
+}
+
+
+function move(e) {
+	var keyCode = e.keyCode || e.which, arrow = {left: 37, up: 38, right: 39, down: 40 };
+	var delta = 2;
+ 
+
+  	switch (keyCode) {
+    	case arrow.left:
+      		MoveRobot(robot_coordinates[0]-delta,robot_coordinates[1]);
+    	break;
+    	case arrow.up:
+      		MoveRobot(robot_coordinates[0],robot_coordinates[1]-delta);
+   	 break;
+    	case arrow.right:
+      		MoveRobot(robot_coordinates[0]+delta,robot_coordinates[1]);
+    	break;
+    	case arrow.down:
+      		MoveRobot(robot_coordinates[0],robot_coordinates[1]+delta);
+    	break;
+  }
+   DrawWorld();
+}
+</script>
+
+</head>
+<body onload = "init();DrawWorld();">
+<center>
+<table class="center"  border = 0>
+<tr><td>
+<h1 style="color:#333333">PARTICLE FILTER</h1>
+</td></tr><tr><td width="500" height="400">
+	<div style="height:100%;text-align:left;"><canvas id="world" width="400" height="300"></canvas></div>
+</td>
+<td style="vertical-align:top">
+	<table class='UI' border = 0>
+		<tr><td><input type="text" id="particles_number" size=5></td><td><input type=button value="SET # OF PARTICLES" onclick="number_of_particles = parseInt(document.getElementById('particles_number').value)"</td></tr>
+		<tr><td></td><td><input type="button" value="RESET WORLD" onclick="Reset()"/></td></tr>
+		<tr><td></td><td><input type="button" value="DO MEASURMENTS THROUGH THE SENSORS" onclick="Sense()"/></td></tr>
+		<tr><td></td><td><input type="button" value="REDRAW WORLD" onclick="DrawWorld()" /></td></tr>
+		<tr><td></td><td><input type="button" value="PLACE ROBOT" onclick="placing_robot=true;move_to=false;" /></td></tr>
+		<tr><td></td><td><input type="button" value="PLACE WALLS" onclick="placing_robot=false;move_to=false;" /></td></tr>
+		<tr><td>REPEAT<!--input type="checkbox" id="repeat_move" checked  onclick="RepeatMove()"--></td><td><input type="button" value="MOVE ROBOT TO NEW LOCATION" onclick="move_to=true;repeat_move=true;" /></td></tr>
+		<tr><td>Status:</td><td><span id="status" style="color:red"></span></td></tr>
+	</table>
+</td>
+</tr>
+<tr><td id="copyright" class="center">By Yuri Golub (C) 2011</td></tr>
+</table>
+
+</center>
+<script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q || []).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-42394238-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+</body>
+</html>
